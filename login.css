@@ -1,0 +1,115 @@
+/* .container
+{
+    display: flex;
+justify-content: center;
+} */
+
+body{
+    background: #000;
+    font-family: 'Inter';
+}
+
+.header
+{
+    display: flex;
+height: 78px;
+margin-top: 12%;
+flex-direction: column;
+justify-content: center;
+color: #F0F0F0;
+text-align: center;
+font-family: RittsCursiveW01-Regular;
+font-size: 48px;
+font-style: normal;
+font-weight: 400;
+line-height: normal;
+}
+.login
+{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+/* justify-content: center; */
+/* justify-content: space-around; */
+align-items: center;
+    width: 417px;
+height: 260px;
+flex-shrink: 0;
+border-radius: 35px;
+border: 2px solid #EEE;
+margin-top: 1.5rem;
+}
+.email
+{
+    width: 330px;
+height: 46px;
+flex-shrink: 0;
+margin-top: 12%;
+border-radius: 64px;
+border: 1px solid #575757;
+background: rgba(198, 198, 198, 0.14);
+color: #EEE;
+
+}
+
+.password
+{
+    width: 330px;
+height: 46px;
+flex-shrink: 0;
+border-radius: 64px;
+margin-top: 4%;
+/* margin-left: 4%; */
+border: 1px solid #575757;
+background: rgba(198, 198, 198, 0.14);
+color: #EEE;
+}
+.loginbutt
+{
+    border-radius: 35px;
+background: #585858;
+/* backdrop-filter: blur(2px); */
+border: 0;
+width: 125px;
+height: 39.167px;
+flex-shrink: 0;
+margin-top: 20%;
+color: #EEE;
+}
+.loginbutt:hover
+{
+    border: 2px solid white;
+    border-radius: 35px;
+    background-color: #ffffff00;
+}
+.vedio
+{
+    z-index: -1;
+    position: fixed;
+  object-fit: fill;
+  bottom: 0;
+  filter: blur(10px);
+}
+input[type=text]
+{
+    padding: 0px 25px ;
+    box-sizing: border-box;
+ 
+}
+.eyeoff
+{
+    z-index: 20;
+    fill: #EEE;
+}
+.signup
+{
+    margin-top: 2%;
+    margin-left: 60%;
+}
+.sign
+{
+    color: #EEE;
+}
