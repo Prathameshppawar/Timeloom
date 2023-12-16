@@ -15,7 +15,9 @@ const home = () => {
   const det = [[]];
   const [eventdet, seteventdet] = useState(det);
   let a1 = 0;
-
+  const clubdet=[[]];
+  const [clubdetails, setclubdetails] = useState(clubdet);
+  const [clubcreator, setclubcreator] = useState('')
   const loadfunc = async (e) => {
     //   console.log('event logging', e);
     //   e.preventDefault();
@@ -33,8 +35,8 @@ const home = () => {
       if (response.status === 200) {
         a1++;
         setuserdetails(json);
-        console.log("res status ok");
-        console.log(a1, "user json", json);
+        // console.log("res status ok");
+        // console.log(a1, "user json", json);
       } else {
         console.log("failed to fetch");
         // loginFail();
@@ -48,12 +50,10 @@ const home = () => {
       setLoading(false); // Ensure loading indicator disappears always
     }
   };
-
-  
-
+  // console.log(userdetails.user?.followingClubs)
   const eventload = async (e) => {
     setLoading(true);
-    console.log('in event load')
+    // console.log('in event load')
 
     try {
       const response = await fetch(`${host}/allEvents`, {
@@ -81,22 +81,187 @@ const home = () => {
       setLoading(false); // Ensure loading indicator disappears always
     }
   };
-  let endTime = String(eventdet[0].endTime).split(".")[0].split("T")[1],
-    startTime = String(eventdet[0].startTime).split(".")[0].split("T")[1];
+
+  const clubload= async (e) =>{
+    setLoading(true);
+    try{
+      const response=await fetch(`${host}/allClubs`, {
+        method:"GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const clubsjson=await response.json();
+      if(response.status===200){
+        // console.log(clubsjson.creatorsNameList[0])
+        setclubdetails(clubsjson.allClubs);
+        setclubcreator(clubsjson.creatorsNameList)
+      }
+      else{
+        console.log('failed to fetch');
+      }
+    }catch(error){
+      console.log('caught error', error);
+    } finally{
+      setLoading(false);
+    }
+  };
+
+  // let endTime = String(eventdet[0].endTime).split(".")[0].split("T")[1], startTime = String(eventdet[0].startTime).split(".")[0].split("T")[1];
   // endTime=endTime.split('T')[1], startTime=startTime.split('T')[1];
   // const dateObject= new Date(eventdet[0]);
   // const hours = dateObject.getHours();
   // const minutes = dateObject.getMinutes();
   // const formattedTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  const months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+  const eventsByMonth = {};
+  eventdet.allEvents?.forEach((event, eventindex) => {
+    const monthYearKey = `${String(event.startTime).slice(0, 7)}`;
+    const dateKey = String(event.startTime).split("T")[0];
+
+    if (!eventsByMonth[monthYearKey]) {
+      eventsByMonth[monthYearKey] = {};
+    }
+
+    if (!eventsByMonth[monthYearKey][dateKey]) {
+      eventsByMonth[monthYearKey][dateKey] = [];
+    }
+
+    eventsByMonth[monthYearKey][dateKey].push({ ...event, index: eventindex });
+  });
 
   useEffect(() => {
-    // This will run when the component is mounted
+    // console.log('Effect 1: Fetching user data');
     loadfunc();
-    eventload();
-    
   }, []);
 
-  
+  useEffect(() => {
+    // console.log('Effect 2: Fetching event data');
+    eventload();
+  }, []);
+
+  useEffect(() => {
+    // console.log('Effect 2: Fetching event data');
+    clubload();
+  }, []);
+
+  const [overlayVisible, setoverlayVisible] = useState(false);
+
+  const neweventon = () => {
+    setoverlayVisible(true);
+  };
+  const neweventoff = () => {
+    setoverlayVisible(false);
+  };
+  const [followoverlay, setfollowoverlay] = useState(false)
+  const on=()=>{
+    // console.log('clicked on')
+    setfollowoverlay(true);
+  }
+  const off=()=>{
+    setfollowoverlay(false);
+  }
+
+  const [groupAddOverlay, setgroupAddOverlay] = useState(false);
+  const addgroup = () => {
+    setgroupAddOverlay(true);
+  };
+  const addgroupoff = () => {
+    setgroupAddOverlay(false);
+  };
+
+  const [eventsname, seteventsname] = useState("");
+  const eventChange = (e) => {
+    seteventsname(e.target.value);
+    console.log(eventsname);
+  };
+
+  const [clubname, setclubname] = useState("");
+  const clubChange = (e) => {
+    console.log(e.target.value)
+    setclubname(userdetails.user?.included_in_clubs[e.target.value].clubId);
+    console.log(clubname);
+  };
+
+  const [eventdate, seteventdate] = useState("");
+  const eventdateChange = (e) => {
+    seteventdate(e.target.value);
+    console.log(eventdate);
+  };
+
+  const [eventstarttime, seteventstarttime] = useState("");
+  const eventstarttimeChange = (e) => {
+    seteventstarttime(e.target.value);
+    console.log(eventstarttime);
+  };
+
+  const [eventendtime, seteventendtime] = useState("");
+  const eventendtimeChange = (e) => {
+    seteventendtime(e.target.value);
+    console.log(eventendtime);
+  };
+
+  const startdatetimeStr = `${eventdate}T${eventstarttime}:00.000+05:00`;
+  const enddatetimeStr = `${eventdate}T${eventendtime}:00.000+05:00`;
+
+
+  const handleClick = async (e) => {
+    console.log('handling the click on create event')
+    console.log(e);
+    e.preventDefault();
+    setLoading(true);
+    console.log(`${host}/addEvent/${clubname}`)
+    try {
+      const response = await fetch(`${host}/addEvent/${clubname}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          'auth-token': localStorage.getItem('token'),
+        },
+        body: JSON.stringify({
+          title: eventsname,
+          description: 'Some description',
+          startTime: startdatetimeStr,
+          endTime: enddatetimeStr,
+          venue: 'Any venue',
+        }),
+      });
+      if (response.status === 200) {
+        setLoading(false);
+        console.log('no error')
+        //save the auth token and redirect
+        localStorage.setItem("token");
+        navigate("/home");
+      } else {
+        console.log('some error')
+        setLoading(false);
+      }
+    } catch (error) {
+      setLoading(false);
+      console.log(error);
+    }
+    setLoading(false);
+
+      setclubname("");
+      seteventsname("");
+      seteventdate("");
+      seteventstarttime("");
+      seteventendtime("");
+  };
+
   return (
     <>
       {loading && (
@@ -125,7 +290,11 @@ const home = () => {
         <div className="timeloomheader">
           <div className="timeloom">Timeloom</div>
           <div className="addevent">
-            <button className="addeventbutton">Add New Event</button>
+            {userdetails.user?.illuster && (
+              <button className="addeventbutton" onClick={neweventon}>
+                Add New Event
+              </button>
+            )}
           </div>
         </div>
         <div className="panels">
@@ -142,20 +311,13 @@ const home = () => {
                   <circle cx="25" cy="25" r="25" fill="#DFDFDF" />
                 </svg>
               </div>
+              {/* {console.log(userdetails.user.name)} */}
               <div className="userdetails">
-                <div className="username">{userdetails.name}</div>
-                <div className="useremailid">{userdetails.email}</div>
+                <div className="username">{userdetails.user?.name}</div>
+                <div className="useremailid">{userdetails.user?.email}</div>
                 <div className="userstatus">
-                  {console.log("illuster value:", userdetails?.illuster)}
-                  {userdetails?.illuster && (
-                    <div>
-                      illustor
-                      {console.log(
-                        "logging user details as illustor",
-                        userdetails.illustor
-                      )}
-                    </div>
-                  )}
+                  {/* {console.log("illuster valxue:", userdetails.user?.illuster)} */}
+                  {userdetails.user?.illuster && <div>illustor</div>}
                 </div>
               </div>
             </div>
@@ -165,7 +327,7 @@ const home = () => {
               </div>
 
               <div className="followinglist">
-                {userdetails.followingClubs?.map((comcreator, index) => (
+                {userdetails.FollwingClubs?.map((comcreator, index) => (
                   <div className="listbar" key={index}>
                     <div className="profile">
                       <svg
@@ -179,16 +341,16 @@ const home = () => {
                       </svg>
                     </div>
                     <div className="listdetails">
-                      <div className="groupname">Cultural Committee</div>
-                      <div className="groupcreator">
+                      <div className="groupname">{comcreator}</div>
+                      {/* <div className="groupcreator">
                         {comcreator}
                         {console.log("this is comcreator", comcreator, index)}
-                      </div>
+                      </div> */}
                     </div>
                   </div>
                 ))}
               </div>
-              <button className="followingfooter">
+              <button className="followingfooter" onClick={on}>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="16"
@@ -205,14 +367,38 @@ const home = () => {
                   />
                 </svg>
               </button>
-            </div>
+            </div>  
             <div className="member">
               <div className="memberheader">
-                <div className="membertitle">Member</div>
+                <div className="membertitle">Member of</div>
               </div>
               <div className="memberlist">
-                {userdetails.followingClubs?.map((membergroup, index) => (
-                  <div className="listbar" key={index} >
+                {userdetails.IncludedInClubs?.map((membergroup, index) => {
+                  // console.log(userdetails.user?.included_in_clubs[index].clubId)
+                  // console.log(`${host}/deleteClub/${userdetails.user?.included_in_clubs[index].clubId}`)
+                  const handledelete= async(e)=>{
+                  setLoading(true);
+                  try{
+                    const response= await fetch(`${host}/deleteClub/${userdetails.user?.included_in_clubs[index].clubId}`,{
+                    method:'DELETE',
+                    headers:{
+                      'auth-token': localStorage.getItem('token'),
+                    }
+                  });
+                  if(response.status===200){
+                    console.log('unfollowed', clubnames.clubName)
+                  }else{
+                    console.log('failed to fetch')
+                  }
+                  } catch(error){
+                    console.log('caught error', error)
+                  }finally{
+                    setLoading(false);
+                  }
+                };
+                  return (
+                  <div className="listbar" key={index}>
+                    {/* {console.log(membergroup)} */}
                     <div className="profile">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -225,10 +411,11 @@ const home = () => {
                       </svg>
                     </div>
                     <div className="listdetails">
-                      <div className="groupname">Technical Committee</div>
-                      <div className="groupcreator">{membergroup}</div>
+                      <div className="groupname">{membergroup}</div>
+                      {/* <div className="groupcreator">{membergroup}</div> */}
                     </div>
-                    <button className="deletegroup">
+                    
+                    <button className="deletegroup" onClick={handledelete}>
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="15"
@@ -245,7 +432,7 @@ const home = () => {
                         />
                       </svg>
                     </button>
-                    <button className="editgroup">
+                    {/* <button className="editgroup">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="15"
@@ -261,155 +448,332 @@ const home = () => {
                           stroke-linejoin="round"
                         />
                       </svg>
-                    </button>
+                    </button> */}
                   </div>
-                ))}
+                  )
+                })}
               </div>
-              {userdetails?.illuster && (
-                <button
-                  className="memberfooter"
-                  onClick={() => console.log("can create new group")}
-                >
+              {/* {userdetails.user?.illuster && (
+                <button className="memberfooter" onClick={addgroup}>
                   create group
                 </button>
-              )}
+              )} */}
             </div>
           </div>
           <div className="panel2">
-            <div className="rows">
-              <div className="monthheader">
-                <div className="month">December, 2023</div>
+            {Object.keys(eventsByMonth).map((monthYearKey) => (
+              <div key={monthYearKey} className="rows">
+                <div className="monthheader">
+                  <div className="month">
+                    {months[parseInt(monthYearKey.slice(5, 7)) - 1]},{" "}
+                    {parseInt(monthYearKey.slice(0, 4))}
+                  </div>
+                </div>
+                {Object.keys(eventsByMonth[monthYearKey]).map((dateKey) => (
+                  <div key={dateKey} className="datebar">
+                    <div className="date">{dateKey}</div>
+                    {eventsByMonth[monthYearKey][dateKey].map((event) => (
+                      <div key={event.index} className="event">
+                        <div className="eventheader">
+                          <div className="eventname">{event.title}</div>
+                          <div className="eventtime">
+                            {String(event.startTime)
+                              .split("T")[1]
+                              .split(".")[0]
+                              .slice(0, 5)}{" "}
+                            to{" "}
+                            {String(event.endTime)
+                              .split("T")[1]
+                              .split(".")[0]
+                              .slice(0, 5)}
+                          </div>
+                        </div>
+                        <div className="eventclub">
+                          <div className="eventclubtext">
+                            By {eventdet.ofClubList[event.index]}
+                          </div>
+                          {/* <button className="editevent">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <path
+                          d="M18 10L21 7L17 3L14 6M18 10L8 20H4V16L14 6M18 10L14 6"
+                          stroke="#FFF"
+                          stroke-width="1.5"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    </button> */}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ))}
               </div>
-              <div className="datebar">
-                <div className="date">
-                  8 December
-                  {console.log("event details", eventdet)}
-                </div>
-                <div className="event">
-                  <div className="eventheader">
-                    <div className="eventname">{eventdet[0].title}</div>
-                    <div className="eventtime">
-                      {startTime} to {endTime}
-                    </div>
-                  </div>
-                  <div className="eventclub">
-                    By creator{" "}
-                    {creatordetails?.name}
-                  </div>
-                </div>
-                <div className="event">
-                  <div className="eventheader">
-                    <div className="eventname">Phtotography Workshop</div>
-                    <div className="eventtime">4:00 p.m. to 6:00 p.m.</div>
-                  </div>
-                  <div className="eventclub">By Photography club</div>
-                </div>
-              </div>
-              <div className="datebar">
-                <div className="date">31 December</div>
-                <div className="event">
-                  <div className="eventheader">
-                    <div className="eventname">New year party</div>
-                    <div className="eventtime">8:00 p.m. to 11:00 p.m.</div>
-                  </div>
-                  <div className="eventclub">By 3rd year</div>
-                </div>
-              </div>
-            </div>
-            <div className="rows">
-              <div className="monthheader">
-                <div className="month">Janaury, 2024</div>
-              </div>
-              <div className="datebar">
-                <div className="date">5 January</div>
-                <div className="event">
-                  <div className="eventheader">
-                    <div className="eventname">App Dev Workshop</div>
-                    <div className="eventtime">3:00 p.m. to 5:00 p.m.</div>
-                  </div>
-                  <div className="eventclub">By GDSC</div>
-                </div>
-                <div className="event">
-                  <div className="eventheader">
-                    <div className="eventname">Drama Workshop</div>
-                    <div className="eventtime">4:00 p.m. to 6:00 p.m.</div>
-                  </div>
-                  <div className="eventclub">By Drama club</div>
-                </div>
-                <div className="event">
-                  <div className="eventheader">
-                    <div className="eventname">Placement cell meet</div>
-                    <div className="eventtime">9:00 p.m. to 10:00 p.m.</div>
-                  </div>
-                  <div className="eventclub">By Placement cell</div>
-                </div>
-              </div>
-            </div>
-            <div className="rows">
-              <div className="monthheader">
-                <div className="month">December, 2023</div>
-              </div>
-              <div className="datebar">
-                <div className="date">8 December</div>
-                <div className="event">
-                  <div className="eventheader">
-                    <div className="eventname">Web Dev Workshop</div>
-                    <div className="eventtime">3:00 p.m. to 5:00 p.m.</div>
-                  </div>
-                  <div className="eventclub">By GDSC</div>
-                </div>
-                <div className="event">
-                  <div className="eventheader">
-                    <div className="eventname">Phtotography Workshop</div>
-                    <div className="eventtime">4:00 p.m. to 6:00 p.m.</div>
-                  </div>
-                  <div className="eventclub">By Photography club</div>
-                </div>
-              </div>
-              <div className="datebar">
-                <div className="date">31 December</div>
-                <div className="event">
-                  <div className="eventheader">
-                    <div className="eventname">New year party</div>
-                    <div className="eventtime">8:00 p.m. to 11:00 p.m.</div>
-                  </div>
-                  <div className="eventclub">By 3rd year</div>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
 
-          <div className="panel3">
-            <div className="notificationsheader">
-              <div className="notifications">Notifications Panel</div>
-            </div>
-            <div className="noties">
-              <div className="neweventbar">
-                <div className="notiesheader">
-                  <div className="clubname">Cultural committee</div>
-                  <div className="notietype">New event</div>
-                </div>
-                <div className="notieinfo">
-                  <div className="notieeventname">Photography workshop</div>
-                  <div className="notieeventdate">
-                    9 December, 5:00 p.m. to 7:00 p.m.
-                  </div>
-                </div>
-              </div>
-              <div className="neweventbar">
-                <div className="notiesheader">
-                  <div className="clubname">Placement cell</div>
-                  <div className="notietype">added to new group</div>
-                </div>
-                <div className="notieinfo">
-                  <div className="creator">By Rohit khandal</div>
-                  <div className="newgroupdate">
-                    9 December, 5:00 p.m. to 7:00 p.m.
-                  </div>
-                </div>
-              </div>
+        {/* all panels have been completed till here */}
+        {/* now the ones appearing above the panels begin from here */}
+        <div
+          id="overlay4"
+          onClick={neweventoff}
+          style={{ display: overlayVisible ? "block" : "none" }}
+        ></div>
+        <div
+          id="neweventfunction"
+          style={{ display: overlayVisible ? "flex" : "none" }}
+        >
+          <input
+            type="text"
+            className="neweventname"
+            placeholder="event name"
+            value={eventsname}
+            onChange={eventChange}
+          />
+          {/* <input
+            type="text"
+            className="neweventname"
+            placeholder="club name"
+            value={clubname}
+            onChange={clubChange}
+          /> */}
+          <div   className="neweventname">
+            {/* {console.log(userdetails)} */}
+            {/* {console.log(userdetails.user?.included_in_clubs[0])} */}
+            <select className="neweventname" style={{width:"100%"}}  onChange={clubChange}>
+              {/* Add a default option */}
+              <option value="" disabled selected>
+                Select a club
+              </option>
+              {userdetails.IncludedInClubs?.map((cluboptions, clubindex) => (
+                <option key={cluboptions} value={clubindex} style={{backgroundColor:"#2A2A2A", width:"100%"}} >
+                  {cluboptions}
+                </option>
+              ))}
+            </select>
+
+            
+            {/* {console.log(clubname)} */}
+          </div>
+          <div className="eventdate">
+            <div className="eventdatetext">Event Date</div>
+            <div className="inputdate">
+              <input
+                type="date"
+                className="neweventdate"
+                value={eventdate}
+                onChange={eventdateChange}
+              />
             </div>
           </div>
+          <div className="timeselect">
+            <div className="starttimetext">Start time</div>
+            <input
+              type="time"
+              className="starttime"
+              value={eventstarttime}
+              onChange={eventstarttimeChange}
+            />
+            <div className="endtimetext">End time</div>
+            <input
+              type="time"
+              className="endtime"
+              value={eventendtime}
+              onChange={eventendtimeChange}
+            />
+          </div>
+          <button
+            className="createevent"
+            onClick={handleClick}
+          >
+            create event
+          </button>
+        </div>
+
+        <div
+          id="overlay2"
+          onClick={addgroupoff}
+          style={{ display: groupAddOverlay ? "block" : "none" }}
+        ></div>
+        <div
+          id="addgroup"
+          style={{ display: groupAddOverlay ? "flex" : "none" }}
+        >
+          <div className="groupheader">
+            <div className="uploadicon">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="17"
+                height="17"
+                viewBox="0 0 17 17"
+                fill="none"
+              >
+                <path
+                  d="M14.1663 9.20825V12.7499C14.1663 13.5323 13.5321 14.1666 12.7497 14.1666H4.24967C3.46727 14.1666 2.83301 13.5323 2.83301 12.7499L2.83301 9.20825M11.333 5.66659L8.49967 2.83325M8.49967 2.83325L5.66634 5.66658M8.49967 2.83325L8.49967 11.3333"
+                  stroke="black"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </div>
+            <input type="text" className="newgroup" placeholder="newgroup" />
+            <button className="creategroupicon">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="38"
+                height="38"
+                viewBox="0 0 38 38"
+                fill="none"
+              >
+                <path
+                  d="M26.9164 14.25L15.8331 25.3334L11.083 20.5833"
+                  stroke="#2A2A2A"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+          </div>
+          <input
+            type="text"
+            className="groupdescription"
+            placeholder="add description"
+          />
+          <div className="addmembers">add members</div>
+          <input type="text" className="membersearchbar" placeholder="Search" />
+          <div className="membersearchlist">
+            <div className="membersearchlistbar">
+              <div >Ashutosh khatri</div>
+
+              <button className="check">
+                <img
+                  src="./images/unchecked.png"
+                  className="checkbox"
+                  alt="check icon"
+                  height="20px"
+                  width="20px"
+                />
+              </button>
+            </div>
+            <div className="membersearchlistbar">
+              <div >power pp</div>
+
+              <button className="check">
+                <img
+                  src="../images/checkbox.png"
+                  className="checkbox"
+                  alt="check icon"
+                  height="20px"
+                  width="20px"
+                />
+              </button>
+            </div>
+          </div>
+        </div>
+        <div 
+          id="overlay"
+          onClick={off}
+          style={{ display: followoverlay ? "block" : "none" }}
+        >
+        </div>
+        <div 
+          id="followingadd" 
+          style={{ display: followoverlay ? "flex" : "none" }}
+        >
+            <input type="text" id="searchbar" placeholder="Search" />
+            <div className="line"></div>
+            <div className="searchresult">
+              {/* start here */}
+              {clubdetails?.map((clubnames, clubindces)=>{
+                const isFollowing = userdetails.user?.followingClubs.includes(clubnames._id);
+                
+                const handleUnfollow= async(e)=>{
+                  setLoading(true);
+                  try{
+                    const response= await fetch(`${host}/unfollow/${clubnames._id}`,{
+                    method:'PUT',
+                    headers:{
+                      'Content-Type': 'application/json',
+                      'auth-token': localStorage.getItem('token'),
+                    }
+                  });
+                  if(response.status===200){
+                    console.log('unfollowed', clubnames.clubName)
+                  }else{
+                    console.log('failed to fetch')
+                  }
+                  } catch(error){
+                    console.log('caught error', error)
+                  }finally{
+                    setLoading(false);
+                  }
+                };
+
+                const handleFollow=async(e)=>{
+                  setLoading(true);
+                  try{
+                    const response= await fetch(`${host}/follow/${clubnames._id}`,{
+                    method:'PUT',
+                    headers:{
+                      'Content-Type': 'application/json',
+                      'auth-token': localStorage.getItem('token'),
+                    }
+                  });
+                  if(response.status===200){
+                    console.log('followed', clubnames.clubName)
+                  }else{
+                    console.log('failed to fetch')
+                  }
+                  } catch(error){
+                    console.log('caught error', error)
+                  }finally{
+                    setLoading(false);
+                  }
+                };
+                return (
+                
+                <div className="searchlistbar"key={clubindces}>
+                  <div className="profile">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 50 50" fill="none">
+                          <circle cx="25" cy="25" r="25" fill="#DFDFDF"/>
+                      </svg>
+                  </div>
+                  <div className="listdetails">
+                      <div className="groupname">
+                          {/* {console.log(clubnames._id)} */}
+                          {clubnames.clubName}
+                      </div>
+                      <div className="groupcreator">
+                        {/* {console.log(clubcreator[clubindces])} */}
+                          {clubcreator[clubindces]}
+                      </div>
+                  </div>
+                  {isFollowing ? (
+                    <button id="unfollowbutton" onClick={handleUnfollow}>
+                      Unfollow
+                    </button>
+                    ) : (
+                    <button id="followbutton" onClick={handleFollow}>
+                      Follow
+                    </button>
+                  )}
+                </div> 
+                )
+              })}
+                
+              
+
+            {/* end here */}
+            </div>
+        </div>
         </div>
       </div>
     </>
